@@ -1,7 +1,7 @@
 import hashlib
-import json
-from typing import Optional, Callable, Any
 from functools import wraps
+from typing import Optional, Callable
+
 from config.redis_config import get_redis
 from util.log.log import Log
 

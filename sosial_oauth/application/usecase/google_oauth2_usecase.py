@@ -1,5 +1,3 @@
-from typing import Any, Coroutine
-
 from account.adapter.input.web.request.create_account_request import CreateAccountRequest
 from account.application.usecase.account_usecase import AccountUseCase
 from sosial_oauth.adapter.input.web.request.get_access_token_request import GetAccessTokenRequest
