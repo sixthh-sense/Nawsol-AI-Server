@@ -1,4 +1,5 @@
 import secrets
+
 from fastapi import Request, HTTPException
 
 CSRF_COOKIE_NAME = "csrf_token"

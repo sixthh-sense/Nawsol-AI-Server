@@ -1,9 +1,8 @@
+import functools
+import inspect
 import logging
 import os
-import inspect
-import functools
 import time
-
 from datetime import datetime
 
 

@@ -1,7 +1,8 @@
+import base64
+
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-import base64
 
 # 1. 키와 IV 생성 (안전을 위해 임의로 생성)
 key = get_random_bytes(16) # 128비트 키

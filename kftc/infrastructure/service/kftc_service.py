@@ -1,8 +1,9 @@
 import os
 import uuid
+from datetime import datetime
 
 import requests
-from datetime import datetime
+
 from util.log.log import Log
 
 logger = Log.get_logger()

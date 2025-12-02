@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer, Float
+
 from config.database.session import Base
+
 
 class InterestRateORM(Base):
     __tablename__ = "interest_rate"

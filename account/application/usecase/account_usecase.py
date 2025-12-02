@@ -1,8 +1,8 @@
 from typing import Optional
 
+from account.adapter.input.web.request.update_account_request import UpdateAccountRequest
 from account.domain.account import Account
 from account.infrastructure.repository.account_repository_impl import AccountRepositoryImpl
-from account.adapter.input.web.request.update_account_request import UpdateAccountRequest
 from util.log.log import Log
 
 logger = Log.get_logger()

@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from ecos.infrastructure.orm.exchange_rate import ExchangeType
 
 

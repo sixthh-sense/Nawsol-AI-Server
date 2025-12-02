@@ -1,6 +1,8 @@
-from ieinfo.application.port.ie_info_repository_port import IEInfoRepositoryPort
-from config.database.session import get_db_session
 from sqlalchemy.orm import Session
+
+from config.database.session import get_db_session
+from ieinfo.application.port.ie_info_repository_port import IEInfoRepositoryPort
+
 
 class IEInfoRepositoryImpl(IEInfoRepositoryPort):
     __instance = None

@@ -1,5 +1,7 @@
 import uuid
+
 from fastapi import Cookie
+
 from sosial_oauth.adapter.input.web.google_oauth2_router import redis_client
 from util.log.log import Log
 

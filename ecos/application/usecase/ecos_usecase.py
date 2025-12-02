@@ -1,5 +1,5 @@
-from typing import List
 from datetime import datetime
+from typing import List
 
 from ecos.adapter.output.ecos.ecos_data_api_adapter import EcosDataApiAdapter
 from ecos.application.port.ecos_repository_port import EcosRepositoryPort
@@ -7,7 +7,6 @@ from ecos.domain.ecos import Ecos
 from ecos.domain.ecos_data import EcosData
 from ecos.domain.ecos_interest import EcosInterest
 from ecos.infrastructure.orm.exchange_rate import ExchangeType
-
 from util.log.log import Log
 
 logger = Log.get_logger()

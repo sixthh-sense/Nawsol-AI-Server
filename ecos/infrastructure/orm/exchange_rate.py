@@ -1,8 +1,10 @@
 from datetime import datetime
+from enum import Enum as PyEnum
 
 from sqlalchemy import Column, DateTime, Enum as SAEnum, Integer, Float
-from enum import Enum as PyEnum
+
 from config.database.session import Base
+
 
 class ExchangeType(PyEnum):
     DOLLAR = "0000001"

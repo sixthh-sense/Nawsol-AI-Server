@@ -1,9 +1,10 @@
 from typing import List
-from config.database.session import get_db_session
-from sqlalchemy.orm import Session
+
 from sqlalchemy import and_
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
+from config.database.session import get_db_session
 from ecos.application.port.ecos_repository_port import EcosRepositoryPort
 from ecos.domain.ecos import Ecos
 from ecos.domain.ecos_interest import EcosInterest

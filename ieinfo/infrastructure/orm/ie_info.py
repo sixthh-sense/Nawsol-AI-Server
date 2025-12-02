@@ -1,8 +1,10 @@
 from datetime import datetime
+from enum import Enum as PyEnum
+
+from sqlalchemy import Column, DateTime, Enum as SAEnum, Integer, String
 
 from config.database.session import Base
-from sqlalchemy import Column, DateTime, Enum as SAEnum, Integer, Float, String
-from enum import Enum as PyEnum
+
 
 class IEType(PyEnum):
     INCOME = "INCOME"

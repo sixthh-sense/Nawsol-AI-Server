@@ -1,8 +1,10 @@
-from sqlalchemy import Column, String, DateTime, Enum as SAEnum, Integer
-from enum import Enum as PyEnum
 from datetime import datetime
+from enum import Enum as PyEnum
+
+from sqlalchemy import Column, String, DateTime, Enum as SAEnum, Integer
 
 from config.database.session import Base
+
 
 class OAuthProvider(PyEnum):
     GOOGLE = "GOOGLE"

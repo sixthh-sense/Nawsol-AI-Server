@@ -1,13 +1,13 @@
 import uuid
-import httpx
 
+import httpx
 from fastapi import APIRouter, Request, Cookie, Header
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from config.redis_config import get_redis
 from sosial_oauth.application.usecase.google_oauth2_usecase import GoogleOAuth2UseCase
-from util.log.log import Log
 from util.cache.ai_cache import AICache
+from util.log.log import Log
 from util.security.crsf import generate_csrf_token, verify_csrf_token, CSRF_COOKIE_NAME
 
 # Singleton 방식으로 변경

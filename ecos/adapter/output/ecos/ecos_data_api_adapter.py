@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import List
+
 from ecos.domain.ecos_data import EcosData
 from ecos.domain.ecos_item import EcosItem
 from ecos.domain.value_object.ecos_source import EcosSource
 from ecos.infrastructure.api.ecos_client import EcosClient
-from typing import List
 
 
 class EcosDataApiAdapter:

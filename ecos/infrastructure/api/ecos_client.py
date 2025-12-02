@@ -1,7 +1,7 @@
 import os
-import aiohttp
-
 from datetime import datetime, timedelta
+
+import aiohttp
 
 from ecos.infrastructure.orm.exchange_rate import ExchangeType
 

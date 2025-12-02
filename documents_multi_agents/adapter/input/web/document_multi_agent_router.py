@@ -1,20 +1,20 @@
-from fastapi import APIRouter, Depends, UploadFile, HTTPException, Form, Response, Header, Request
-from openai import OpenAI
-from pypdf import PdfReader
 import asyncio
 import io
 import re
 import uuid
 
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, Form, Response, Header, Request
+from openai import OpenAI
+from pypdf import PdfReader
+
+from account.adapter.input.web.session_helper import get_current_user
 from config.crypto import Crypto
 from config.redis_config import get_redis
-from account.adapter.input.web.session_helper import get_current_user
-from util.security.crsf import  verify_csrf_token
-
 from documents_multi_agents.adapter.input.web.request.insert_income_request import InsertDocumentRequest
 from documents_multi_agents.domain.service.prompt_templates import PromptTemplates
-from util.log.log import Log
 from util.cache.ai_cache import AICache
+from util.log.log import Log
+from util.security.crsf import verify_csrf_token
 
 log_util = Log()
 logger = Log.get_logger()
