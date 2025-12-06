@@ -17,9 +17,8 @@ from jobs import scheduler as jobs_scheduler
 # ORM 모델들을 Base.metadata에 등록하기 위해 import, TODO: 기능 개발 후 삭제
 from ieinfo.infrastructure.orm.ie_info import IEInfo
 from product.infrastructure.orm.product_bond import ProductBondORM
-from product.infrastructure.orm.product_etf import ProductETFORM
 from product.infrastructure.orm.product_fund import ProductFundORM
-
+from finance.infrastructure.orm.finance_orm import FinanceORM
 
 
 from fastapi import FastAPI
