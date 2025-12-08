@@ -5,6 +5,7 @@ from product.application.port.product_repository_port import ProductRepositoryPo
 from product.domain.product_etf import ProductEtf
 from product.domain.product_etf_data import ProductEtfData
 from product.infrastructure.api.data_go_client import DataGoClient
+from product.infrastructure.orm.product_etf import ProductETFORM
 
 from util.log.log import Log
 
@@ -17,7 +18,7 @@ class FetchProductUseCase:
     async def get_etf_data(self) -> ProductEtfData:
         return await self.adapter.get_etf_data()
 
-    async def get_etf_data_by_date(self, date: str) -> List[ProductEtf]:
+    async def get_etf_data_by_date(self, date: str) -> List[ProductETFORM]:
         return await self.repository.get_etf_data_by_date(date)
 
     async def fetch_and_save_etf_data(self) -> List[ProductEtf]:

@@ -11,6 +11,7 @@ class DataGoClient:
 
     async def get_etf_data(self) -> list[dict]:
         today = datetime.today().strftime("%Y%m%d")
+        today="20251205"
         results = []
         async with aiohttp.ClientSession() as session:
             base_url = (

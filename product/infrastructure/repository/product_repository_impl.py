@@ -30,13 +30,14 @@ class ProductRepositoryImpl(ProductRepositoryPort):
         if not hasattr(self, 'db'):
             self.db: Session = get_db_session()
 
-    async def get_etf_data_by_date(self, date:str) -> List[ProductEtf]:
+    async def get_etf_data_by_date(self, date:str) -> List[ProductETFORM]:
         rows = (self.db.query(ProductETFORM).
                 filter(func.date_format(ProductETFORM.basDt, "%Y%m%d") == date).
                 all())
 
         return [
-            ProductEtf(
+            ProductETFORM(
+                id=row.id,
                 fltRt=row.fltRt,
                 nav=row.nav,
                 mkp=row.mkp,

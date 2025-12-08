@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from product.domain.product_etf import ProductEtf
+from product.infrastructure.orm.product_etf import ProductETFORM
 
 
 class ProductRepositoryPort(ABC):
 
     @abstractmethod
-    async def get_etf_data_by_date(self, date:str) -> List[ProductEtf]:
+    async def get_etf_data_by_date(self, date:str) -> List[ProductETFORM]:
         pass
 
     @abstractmethod
