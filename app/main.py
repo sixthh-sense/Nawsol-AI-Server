@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 
 from finance.adapter.input.web.finance_router import finance_router
+from kakao_authentication.adapter.input.web.kakao_authentication_router import kakao_authentication_router
 from market_data.adapter.input.web.market_data_router import market_data_router
 
 load_dotenv()
@@ -62,6 +63,7 @@ app.include_router(product_data_router, prefix="/product")
 app.include_router(market_data_router, prefix="/market-data")
 app.include_router(finance_router, prefix="/finance")
 app.include_router(news_info_router, prefix="/news_info")
+app.include_router(kakao_authentication_router, prefix="/kakao-authentication")
 
 # 앱 실행
 
