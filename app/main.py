@@ -30,6 +30,7 @@ from finance.infrastructure.orm.finance_orm import FinanceORM
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+CORS_ALLOWED_FRONTEND_URL = os.getenv("CORS_ALLOWED_FRONTEND_URL")
 
 app = FastAPI()
 
@@ -43,7 +44,7 @@ async def on_shutdown():
     jobs_scheduler.stop_scheduler()
 
 origins = [
-    "http://localhost:3000",  # Next.js 프론트 엔드 URL
+    CORS_ALLOWED_FRONTEND_URL,  # Next.js 프론트 엔드 URL
 ]
 
 app.add_middleware(
