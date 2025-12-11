@@ -62,11 +62,6 @@ class FetchProductUseCase:
     async def get_fund_data(self) -> ProductFundData:
         return await self.adapter.get_fund_data()
       
-    async def get_bond_data(self) -> ProductBondData:
-        return await self.adapter.get_bond_data()
-
-    async def get_fund_data_by_date(self, date:str) -> List[ProductFundORM]:
-
     async def get_fund_data_by_date(self, date:str) -> List[ProductFundORM]:
         return await self.repository.get_fund_data_by_date(date)
 
@@ -125,6 +120,9 @@ class FetchProductUseCase:
             if fund_entities:
                 await self.repository.save_fund_batch(fund_entities)
             return fund_entities
+
+    async def get_bond_data(self) -> ProductBondData:
+        return await self.adapter.get_bond_data()
 
     async def get_bond_data_by_date(self, date:str) -> List[ProductBondORM]:
 
