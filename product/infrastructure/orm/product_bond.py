@@ -9,7 +9,7 @@ class ProductBondORM(Base):
     __tablename__ = "product_bond"
     id = Column(Integer, primary_key=True, index=True)
     basDt = Column(DateTime, default=datetime.utcnow)       # 기준일자
-    crno = Column(String(255), nullable=True)                # 법인등록번호
+    crno = Column(String(255), nullable=True)               # 법인등록번호
     bondIsurNm = Column(String(255), nullable=True)         # 채권발행인명
     bondIssuDt = Column(DateTime, default=datetime.utcnow)  # 채권발행일자
     scrsItmsKcd = Column(String(255), nullable=True)        # 유가증권종목종류코드
@@ -20,8 +20,8 @@ class ProductBondORM(Base):
     bondExprDt = Column(DateTime, default=datetime.utcnow)  # 채권만기일자
     bondIssuCurCd = Column(String(255), nullable=True)      # 채권발행통화코드
     bondIssuCurCdNm = Column(String(255), nullable=True)    # 채권발행통화코드명
-    bondPymtAmt = Column(BigInteger, nullable=True)               # 채권납입금액
-    bondIssuAmt = Column(BigInteger, nullable=True)               # 채권발행금액
+    bondPymtAmt = Column(BigInteger, nullable=True)         # 채권납입금액
+    bondIssuAmt = Column(BigInteger, nullable=True)         # 채권발행금액
     bondSrfcInrt = Column(Float, nullable=True)             # 채권표면이율
     irtChngDcd = Column(String(255), nullable=True)         # 금리변동구분코드
     irtChngDcdNm = Column(String(255), nullable=True)       # 금리변동구분코드명
