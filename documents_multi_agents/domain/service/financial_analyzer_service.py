@@ -553,11 +553,24 @@ class FinancialAnalyzerService:
             }
 
     @log_util.logging_decorator
-    def _generate_recommendations(self, income_data: Dict, expense_data: Dict) -> Dict[str, Any]:
-        """소득/지출 데이터를 기반으로 자산 분배 추천"""
+    def _generate_recommendations(self, income_data: Dict, expense_data: Dict, use_ai: bool = False) -> Dict[str, Any]:
+        """소득/지출 데이터를 기반으로 자산 분배 추천
+        
+        Args:
+            income_data: 소득 데이터
+            expense_data: 지출 데이터
+            use_ai: True이면 GPT 사용, False이면 규칙 기반 사용 (기본값: False)
+        """
         if not income_data or not expense_data:
             return {"message": "소득 또는 지출 데이터가 부족합니다"}
 
+        # 🔥 규칙 기반 추천 (기본값)
+        if not use_ai:
+            from asset_allocation.domain.service.rule_based_allocation_service import RuleBasedAllocationService
+            rule_service = RuleBasedAllocationService()
+            return rule_service.generate_recommendation(income_data, expense_data, risk_profile="balanced")
+
+        # 🔥 AI 기반 추천 (use_ai=True일 때만)
         # 안전한 타입 변환
         try:
             total_income = int(income_data.get("total_income", 0)) if income_data.get("total_income") else 0

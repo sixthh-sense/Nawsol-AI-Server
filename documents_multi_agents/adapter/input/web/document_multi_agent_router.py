@@ -316,53 +316,184 @@ async def analyze_document(
 
 # -----------------------
 # API 엔드포인트
-# 미래 자산 예측
+# 미래 자산 예측 (학습 기반)
 # -----------------------
 @documents_multi_agents_router.get("/future-assets")
 @log_util.logging_decorator
-async def analyze_document(session_id: str = Depends(get_current_user)):
+async def future_assets_analysis(session_id: str = Depends(get_current_user)):
     try:
+        # Redis에서 소득/지출 데이터 가져오기
+        encrypted_data = redis_client.hgetall(session_id)
+        
+        # 🔥 데이터가 없어도 진행 (소득/지출 0원으로 처리)
+        # if not encrypted_data or len(encrypted_data) <= 1:
+        #     return {"success": False, "message": "저장된 재무 데이터가 없습니다. 문서를 먼저 업로드해주세요."}
+        
+        # 복호화 및 소득/지출 분리
+        income_items = {}
+        expense_items = {}
+        
+        for key_bytes, value_bytes in encrypted_data.items():
+            try:
+                if isinstance(key_bytes, bytes):
+                    key_str = key_bytes.decode('utf-8')
+                else:
+                    key_str = str(key_bytes)
+                
+                if isinstance(value_bytes, bytes):
+                    value_str = value_bytes.decode('utf-8')
+                else:
+                    value_str = str(value_bytes)
+                
+                if key_str == "USER_TOKEN":
+                    continue
+                
+                key_plain = crypto.dec_data(key_str)
+                value_plain = crypto.dec_data(value_str)
+                
+                if ":" in key_plain:
+                    doc_type, field_name = key_plain.split(":", 1)
+                    
+                    if "소득" in doc_type or "income" in doc_type.lower():
+                        income_items[field_name] = value_plain
+                    elif "지출" in doc_type or "expense" in doc_type.lower():
+                        expense_items[field_name] = value_plain
+            except Exception:
+                continue
+        
+        # AI로 카테고리 분류
+        from documents_multi_agents.domain.service.financial_analyzer_service import FinancialAnalyzerService
+        analyzer = FinancialAnalyzerService()
+        
+        income_categorized = analyzer._categorize_income(income_items) if income_items else {}
+        expense_categorized = analyzer._categorize_expense(expense_items) if expense_items else {}
+        
+        # 🔥 데이터가 없으면 기본값 설정 (0원)
+        if not income_categorized:
+            income_categorized = {"총소득": 0}
+        if not expense_categorized:
+            expense_categorized = {"총지출": 0}
+        
+        # 🔥 학습 기반 시스템
+        from asset_allocation.domain.service.future_assets_learning_service import FutureAssetsLearningService
+        
+        # 1. 소비 패턴 계산
+        pattern = FutureAssetsLearningService.calculate_pattern(income_categorized, expense_categorized)
+        
+        if not pattern:
+            return {"success": False, "message": "소비 패턴 계산에 실패했습니다."}
+        
+        # 2. 유사 패턴 검색
+        similar_pattern = FutureAssetsLearningService.find_similar_pattern(pattern)
+        
+        if similar_pattern:
+            # 유사 패턴 있음 → 저장된 조언 반환
+            return {
+                "success": True,
+                "method": "learned",
+                "advice": similar_pattern["gpt_advice"],
+                "similarity_score": similar_pattern["similarity_score"],
+                "use_count": similar_pattern["use_count"],
+                "can_request_ai": True  # AI 상세 분석 버튼 표시
+            }
+        else:
+            # 유사 패턴 없음 → GPT 호출
+            content = redis_client.hgetall(session_id)
+            pairs = []
+            for k_bytes, v_bytes in content.items():
+                try:
+                    if k_bytes == "USER_TOKEN":
+                        continue
+                    
+                    key_plain = crypto.dec_data(k_bytes)
+                    val_plain = crypto.dec_data(v_bytes)
+                    
+                    _, field_name = key_plain.split(':', 1)
+                    pairs.append(f"{field_name}: {val_plain}")
+                except ValueError:
+                    continue
+            
+            data_str = ", ".join(pairs)
+            
+            # 🔥 데이터가 없으면 기본값 설정 (소득/지출 0원)
+            if not data_str or data_str.strip() == "":
+                data_str = f"월 소득: {pattern['monthly_income']}원, 월 지출: {pattern['monthly_expense']}원, 저축액: {pattern['monthly_surplus']}원"
+            
+            # GPT 호출
+            question, role = PromptTemplates.get_future_assets_prompt()
+            gpt_advice = await qa_on_document(data_str, question, role)
+            
+            # AI 응답 전처리
+            gpt_advice = gpt_advice.replace("**", "")
+            gpt_advice = gpt_advice.replace("*", "")
+            gpt_advice = re.sub(r'※.*', '', gpt_advice)
+            gpt_advice = re.sub(r'---.*', '', gpt_advice, flags=re.DOTALL)
+            
+            # 3. GPT 조언 저장
+            FutureAssetsLearningService.save_gpt_advice(pattern, gpt_advice)
+            
+            return {
+                "success": True,
+                "method": "gpt_new",
+                "advice": gpt_advice,
+                "can_request_ai": False  # 이미 GPT 사용함
+            }
+        
+    except Exception as e:
+        raise HTTPException(500, f"{type(e).__name__}: {str(e)}")
+
+
+# -----------------------
+# API 엔드포인트
+# 미래 자산 예측 - AI 상세 분석 (사용자 요청 시)
+# -----------------------
+@documents_multi_agents_router.post("/future-assets-ai-detailed")
+@log_util.logging_decorator
+async def future_assets_ai_detailed(session_id: str = Depends(get_current_user)):
+    """
+    사용자가 'AI 상세 분석 받기' 버튼을 눌렀을 때 호출
+    학습된 조언 대신 GPT로 새롭게 분석
+    """
+    try:
+        # Redis에서 데이터 가져오기
         content = redis_client.hgetall(session_id)
         pairs = []
+        
         for k_bytes, v_bytes in content.items():
             try:
                 if k_bytes == "USER_TOKEN":
                     continue
-
+                
                 key_plain = crypto.dec_data(k_bytes)
                 val_plain = crypto.dec_data(v_bytes)
-
-                # key_plain은 "type:field" 형태 — 원하는 대로 처리
+                
                 _, field_name = key_plain.split(':', 1)
                 pairs.append(f"{field_name}: {val_plain}")
-
-            except ValueError as e:
-                # 복호화 실패 시 로깅/무시
+            except ValueError:
                 continue
-
+        
         data_str = ", ".join(pairs)
-
-        # 🔥 캐시 확인
-        cache_key = AICache.generate_cache_key(data_str, "future-assets")
-        cached_response = AICache.get_cached_response(cache_key)
-
-        if cached_response:
-            return cached_response
-
-        # 캐시 미스 - GPT 호출
+        
+        # 🔥 데이터가 없으면 기본값 설정 (소득/지출 0원)
+        if not data_str or data_str.strip() == "":
+            data_str = "월 소득: 0원, 월 지출: 0원, 저축액: 0원"
+        
+        # GPT 호출
         question, role = PromptTemplates.get_future_assets_prompt()
-        answer = await qa_on_document(data_str, question, role)
-
-        # AI 응답 전처리: 마크다운, 설명문 제거
-        answer = answer.replace("**", "")  # 볼드 제거
-        answer = answer.replace("*", "")   # 이탤릭 제거
-        answer = re.sub(r'※.*', '', answer)  # 주석 제거
-        answer = re.sub(r'---.*', '', answer, flags=re.DOTALL)  # 구분선 이후 제거
-
-        # 🔥 캐시 저장 (24시간)
-        AICache.set_cached_response(cache_key, answer, ttl=86400)
-
-        return answer
+        gpt_advice = await qa_on_document(data_str, question, role)
+        
+        # AI 응답 전처리
+        gpt_advice = gpt_advice.replace("**", "")
+        gpt_advice = gpt_advice.replace("*", "")
+        gpt_advice = re.sub(r'※.*', '', gpt_advice)
+        gpt_advice = re.sub(r'---.*', '', gpt_advice, flags=re.DOTALL)
+        
+        return {
+            "success": True,
+            "method": "gpt_detailed",
+            "advice": gpt_advice
+        }
+        
     except Exception as e:
         raise HTTPException(500, f"{type(e).__name__}: {str(e)}")
 
@@ -892,6 +1023,9 @@ async def get_combined_result(session_id: str = Depends(get_current_user)):
         surplus = total_income - total_expense
         surplus_ratio = (surplus / total_income * 100) if total_income > 0 else 0
 
+        # 🔥 신규 기능: 규칙 기반 자산 분배 추천 추가
+        recommendations = analyzer._generate_recommendations(income_categorized, expense_categorized, use_ai=False)
+
         # 시각화용 데이터 구조
         return {
             "success": True,
@@ -904,6 +1038,7 @@ async def get_combined_result(session_id: str = Depends(get_current_user)):
             },
             "income": income_categorized,
             "expense": expense_categorized,
+            "recommendations": recommendations,  # 🔥 자산 분배 추천 추가
             "chart_data": {
                 "income_by_category": income_categorized.get("카테고리별 합계") or income_categorized.get(
                     "카테고리별합계") or income_categorized.get("total_by_category", {}),
@@ -911,6 +1046,132 @@ async def get_combined_result(session_id: str = Depends(get_current_user)):
                     "카테고리별합계") or expense_categorized.get("total_by_main_category", {}),
                 "expense_detail": expense_categorized
             }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
+
+
+# -----------------------
+# AI 기반 자세한 자산 분배 추천 (선택적)
+# -----------------------
+@documents_multi_agents_router.post("/analyze-ai-detailed")
+@log_util.logging_decorator
+async def analyze_with_ai_detailed(session_id: str = Depends(get_current_user)):
+    """
+    AI Agent를 사용하여 자세한 자산 분배 추천 제공
+    사용자가 명시적으로 요청할 때만 호출됨
+    """
+    try:
+        logger.debug("[DEBUG] /analyze-ai-detailed called")
+
+        # Redis에서 데이터 가져오기 (동일한 로직)
+        encrypted_data = redis_client.hgetall(session_id)
+
+        if not encrypted_data or len(encrypted_data) <= 1:
+            raise HTTPException(
+                status_code=404,
+                detail="저장된 재무 데이터가 없습니다. 문서를 먼저 업로드해주세요."
+            )
+
+        # 복호화 및 소득/지출 분리
+        income_items = {}
+        expense_items = {}
+
+        for key_bytes, value_bytes in encrypted_data.items():
+            try:
+                if isinstance(key_bytes, bytes):
+                    key_str = key_bytes.decode('utf-8')
+                else:
+                    key_str = str(key_bytes)
+
+                if isinstance(value_bytes, bytes):
+                    value_str = value_bytes.decode('utf-8')
+                else:
+                    value_str = str(value_bytes)
+
+                if key_str == "USER_TOKEN":
+                    continue
+
+                key_plain = crypto.dec_data(key_str)
+                value_plain = crypto.dec_data(value_str)
+
+                if ":" in key_plain:
+                    doc_type, field_name = key_plain.split(":", 1)
+
+                    if "소득" in doc_type or "income" in doc_type.lower():
+                        income_items[field_name] = value_plain
+                    elif "지출" in doc_type or "expense" in doc_type.lower():
+                        expense_items[field_name] = value_plain
+            except Exception as decrypt_error:
+                logger.error(f"[ERROR] Decryption failed: {str(decrypt_error)}")
+                continue
+
+        # 소득 항목 중 지출성 항목 재분류 (동일한 로직)
+        insurance_keywords = ["보험료", "보험", "연금"]
+        tax_keywords = ["소득세", "지방소득세", "세액"]
+
+        items_to_move = []
+        for field_name, value in list(income_items.items()):
+            should_move = False
+
+            if any(keyword in field_name for keyword in insurance_keywords):
+                if "공제" not in field_name and "대상" not in field_name:
+                    should_move = True
+
+            if any(keyword in field_name for keyword in tax_keywords):
+                if "공제" not in field_name and "과세표준" not in field_name and "산출" not in field_name:
+                    should_move = True
+
+            if should_move:
+                items_to_move.append(field_name)
+
+        for field_name in items_to_move:
+            expense_items[field_name] = income_items.pop(field_name)
+
+        # AI로 카테고리 분류
+        from documents_multi_agents.domain.service.financial_analyzer_service import FinancialAnalyzerService
+
+        analyzer = FinancialAnalyzerService()
+
+        income_categorized = analyzer._categorize_income(income_items) if income_items else {}
+        expense_categorized = analyzer._categorize_expense(expense_items) if expense_items else {}
+
+        # 요약 정보 계산
+        try:
+            total_income = int(income_categorized.get("총소득") or income_categorized.get("total_income", 0)) if (
+                        income_categorized.get("총소득") or income_categorized.get("total_income")) else 0
+        except (ValueError, TypeError) as e:
+            logger.error(f"[ERROR] Failed to calculate total_income: {e}")
+            total_income = 0
+
+        try:
+            total_expense = int(expense_categorized.get("총지출") or expense_categorized.get("total_expense", 0)) if (
+                        expense_categorized.get("총지출") or expense_categorized.get("total_expense")) else 0
+        except (ValueError, TypeError) as e:
+            logger.error(f"[ERROR] Failed to calculate total_expense: {e}")
+            total_expense = 0
+
+        surplus = total_income - total_expense
+        surplus_ratio = (surplus / total_income * 100) if total_income > 0 else 0
+
+        # 🔥 AI 기반 자세한 추천 (use_ai=True)
+        recommendations = analyzer._generate_recommendations(income_categorized, expense_categorized, use_ai=True)
+
+        # 응답 구조
+        return {
+            "success": True,
+            "method": "ai_detailed",
+            "summary": {
+                "total_income": total_income,
+                "total_expense": total_expense,
+                "surplus": surplus,
+                "surplus_ratio": round(surplus_ratio, 2),
+                "status": "흑자" if surplus > 0 else "적자" if surplus < 0 else "수지균형"
+            },
+            "recommendations": recommendations  # AI 기반 자세한 추천
         }
 
     except HTTPException:

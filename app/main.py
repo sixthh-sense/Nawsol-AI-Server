@@ -72,6 +72,7 @@ if __name__ == "__main__":
     import uvicorn
     from ieinfo.infrastructure.orm.ie_rule import IERule
     from ieinfo.infrastructure.orm.ie_info import IEType
+    from asset_allocation.infrastructure.orm.analyze_history import AnalyzeHistory  # 🔥 추가
     from sqlalchemy import select
     
     host = os.getenv("APP_HOST")
