@@ -7,7 +7,7 @@ from config.database.session import get_db_session
 from news_info.application.port.news_info_repository_port import NewsInfoRepositoryPort
 from news_info.domain.value_object.news_item import NewsItem
 from news_info.infrastructure.orm.newsInfo_orm import NewsInfoORM, NewsProvider
-
+from datetime import datetime, timedelta
 
 def _md5_hex(value: str) -> str:
     return hashlib.md5(value.encode("utf-8")).hexdigest()
@@ -95,3 +95,22 @@ class NewsInfoRepositoryImpl(NewsInfoRepositoryPort):
             return news_list
         finally:
             self.db.close()
+
+    async def get_three_month_news_for_card_news(self) -> List[NewsInfoORM]:
+
+        three_months_ago = datetime.utcnow() - timedelta(days=90)
+
+        try:
+            rows = (
+                self.db.query(NewsInfoORM)
+                .filter(NewsInfoORM.published_at >= three_months_ago)
+                .order_by(NewsInfoORM.published_at.desc())
+                .all()
+            )
+
+            return rows
+
+        finally:
+            self.db.close()
+
+

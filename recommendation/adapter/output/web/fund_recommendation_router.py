@@ -83,9 +83,10 @@ async def get_etf_info(session_id: str = Depends(get_current_user)):
             investment_goal=None,
             risk_tolerance=None
         )
+
         # 기존 프론트엔드 인터페이스에 맞춰 응답 형식 변환
         return {
-            "source": "recommendation",
+            "source": "fund-info",
             "fetched_at": datetime.utcnow().isoformat(),
             "total_income": result.get("total_income", 0),
             "total_expense": result.get("total_expense", 0),
@@ -94,13 +95,13 @@ async def get_etf_info(session_id: str = Depends(get_current_user)):
             "items": result.get("recommended_funds", [])
         }
     except Exception as e:
-        logger.error(f"Error in Fund recommendation: {str(e)}")
+        logger.debug(f"Error in fund-info: {str(e)}")
         # 에러 발생 시 외부 API에서 데이터 가져오기 (fallback)
         try:
             fallback_usecase = FetchProductDataUsecaseFactory.create()
             result = await fallback_usecase.get_fund_data()
             return {
-                "source": result.source,
+                "source": "fund-info",
                 "fetched_at": result.fetched_at.timestamp.isoformat(),
                 "total_income": 0,
                 "total_expense": 0,

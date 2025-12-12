@@ -7,7 +7,7 @@ from config.database.session import get_db_session
 from community.application.port.community_repository_port import CommunityRepositoryPort
 from community.domain.value_object.community_post import CommunityPost
 from community.infrastructure.orm.community_post_orm import CommunityPostORM
-
+from datetime import datetime, timedelta
 
 class CommunityRepositoryImpl(CommunityRepositoryPort):
     __instance = None
@@ -85,5 +85,22 @@ class CommunityRepositoryImpl(CommunityRepositoryPort):
                 self.db.refresh(orm_item)
 
             return posts
+        finally:
+            self.db.close()
+
+    async def get_three_month_community_for_card_news(self) -> List[CommunityPostORM]:
+
+        three_months_ago = datetime.utcnow() - timedelta(days=90)
+
+        try:
+            rows = (
+                self.db.query(CommunityPostORM)
+                .filter(CommunityPostORM.posted_at >= three_months_ago)
+                .order_by(CommunityPostORM.posted_at.desc())
+                .all()
+            )
+
+            return rows
+
         finally:
             self.db.close()
