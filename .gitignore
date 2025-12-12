@@ -406,8 +406,10 @@ pyrightconfig.json
 # exclude
 *.pdf
 
-# exclude .env
+# exclude .env (암호화 키 포함 - 절대 커밋 금지!)
 .env
+.env.local
+.env.*.local
 
 # exclude .json
 *.json
