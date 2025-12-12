@@ -23,6 +23,16 @@ INITIAL_EXPENSE_KEYWORDS = [
     "공제", "공제액", "차감"
 ]
 
+# 총 소득 키워드
+INITIAL_TOTAL_INCOME_KEYWORDS = [
+    "총 소득", "총소득", "총수입", "총 수입"
+]
+
+# 총 지출 키워드
+INITIAL_TOTAL_EXPENSE_KEYWORDS = [
+    "총 지출", "총지출", "총 비용", "총비용"
+]
+
 
 def init_ie_rules():
     """IE_RULE 테이블에 초기 키워드 삽입"""
@@ -54,8 +64,32 @@ def init_ie_rules():
         else:
             print(f"  ⏭️  {keyword} (이미 존재)")
     
+    # 총 소득 키워드 삽입
+    total_income_count = 0
+    print("\n📥 총 소득 키워드 삽입 중...")
+    for keyword in INITIAL_TOTAL_INCOME_KEYWORDS:
+        if repo.save_keyword(keyword, IEType.TOTAL_INCOME):
+            total_income_count += 1
+            print(f"  ✅ {keyword}")
+        else:
+            print(f"  ⏭️  {keyword} (이미 존재)")
+    
+    # 총 지출 키워드 삽입
+    total_expense_count = 0
+    print("\n📥 총 지출 키워드 삽입 중...")
+    for keyword in INITIAL_TOTAL_EXPENSE_KEYWORDS:
+        if repo.save_keyword(keyword, IEType.TOTAL_EXPENSE):
+            total_expense_count += 1
+            print(f"  ✅ {keyword}")
+        else:
+            print(f"  ⏭️  {keyword} (이미 존재)")
+    
     print("\n" + "="*80)
-    print(f"✅ 완료! 소득: {income_count}개, 지출: {expense_count}개 삽입")
+    print(f"✅ 완료!")
+    print(f"   소득: {income_count}개")
+    print(f"   지출: {expense_count}개")
+    print(f"   총 소득: {total_income_count}개")
+    print(f"   총 지출: {total_expense_count}개")
     print("="*80 + "\n")
     
     session.close()
